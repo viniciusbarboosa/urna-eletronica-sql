@@ -18,9 +18,11 @@ public class VotacaoService {
     private boolean votacaoAtiva = false;
 
     public void iniciarVotacao() {
+        candidatoRepository.resetarVotos();
+        votanteRepository.resetarStatusVotacao();
+
         votacaoAtiva = true;
     }
-
     public void encerrarVotacao() {
         votacaoAtiva = false;
     }

@@ -46,5 +46,10 @@ export default {
   
   listarVotantes() {
     return api.get('/admin/votantes');
-  }
+  },
+  //PRA VOTAÇAO rever depois
+  verificarAdmin(login, senha) {
+    return api.post('/auth/verify-admin', { login, senha });
+  },
+
 };

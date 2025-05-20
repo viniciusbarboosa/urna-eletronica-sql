@@ -20,15 +20,20 @@ function VotacaoPanel() {
     }
   };
 
-  const handleVotar = async (candidatoId) => {
+const handleVotar = async (candidatoId) => {
     try {
-      await api.votar(candidatoId, cpf);
-      setMensagem('Voto registrado com sucesso!');
-      setVotoRegistrado(true);
+        if (!cpf || cpf.length !== 11) {
+            setMensagem('CPF inválido! Digite os 11 números');
+            return;
+        }
+        
+        await api.votar(candidatoId, cpf);
+        setMensagem('Voto registrado com sucesso!');
+        setVotoRegistrado(true);
     } catch (error) {
-      setMensagem(error.response?.data || 'Erro ao registrar voto');
+        setMensagem(error.response?.data?.message || 'Erro ao registrar voto');
     }
-  };
+};
 
   if (votoRegistrado) {
     return (

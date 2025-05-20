@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.Optional;
+import org.springframework.web.server.ResponseStatusException;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -25,6 +27,18 @@ public class AuthController {
         return userOpt
                 .map(user -> ResponseEntity.ok().body(user))
                 .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+    }
+
+    @PostMapping("/verify-admin")
+    public ResponseEntity<?> verifyAdmin(@RequestBody Usuario credentials) {
+        Usuario usuario = usuarioRepository.findByLoginAndSenha(credentials.getLogin(), credentials.getSenha())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas"));
+
+        if (!usuario.isAdmin()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Apenas administradores podem finalizar a votação");
+        }
+
+        return ResponseEntity.ok().build();
     }
 
 }
