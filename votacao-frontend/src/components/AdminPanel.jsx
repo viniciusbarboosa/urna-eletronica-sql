@@ -12,6 +12,8 @@ import {
   List,
   ListItem,
   ListItemText,
+  ListItemAvatar,
+  Avatar,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -26,14 +28,19 @@ import {
   Person,
   HowToReg,
   Login,
-  Logout
+  Logout,
+  PhotoCamera
 } from '@mui/icons-material';
 
 function AdminPanel({ onLogout }) {
   const [votacaoAtiva, setVotacaoAtiva] = useState(false);
   const [candidatos, setCandidatos] = useState([]);
   const [votantes, setVotantes] = useState([]);
-  const [novoCandidato, setNovoCandidato] = useState('');
+  const [novoCandidato, setNovoCandidato] = useState({
+    nome: '',
+    foto: null,
+    fotoPreview: ''
+  });
   const [novoVotante, setNovoVotante] = useState({ nome: '', cpf: '' });
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authData, setAuthData] = useState({ login: '', senha: '' });
@@ -79,7 +86,7 @@ function AdminPanel({ onLogout }) {
     try {
       await api.encerrarVotacao();
       setVotacaoAtiva(false);
-      navigate('/resultados'); 
+      navigate('/resultados');
     } catch (error) {
       console.error('Erro ao encerrar votação:', error);
     }
@@ -87,11 +94,27 @@ function AdminPanel({ onLogout }) {
 
   const handleAddCandidato = async () => {
     try {
-      await api.criarCandidato({ nome: novoCandidato });
-      setNovoCandidato('');
+      const formData = new FormData();
+      formData.append('nome', novoCandidato.nome); // Aqui estava o problema
+      if (novoCandidato.foto) {
+        formData.append('foto', novoCandidato.foto);
+      }
+
+      // Debug: Verifique o que está sendo enviado
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
+
+      await api.criarCandidato(formData);
+      setNovoCandidato({
+        nome: '',
+        foto: null,
+        fotoPreview: ''
+      });
       carregarDados();
     } catch (error) {
       console.error('Erro ao adicionar candidato:', error);
+      alert('Erro ao adicionar candidato: ' + error.message);
     }
   };
 
@@ -102,6 +125,17 @@ function AdminPanel({ onLogout }) {
       carregarDados();
     } catch (error) {
       console.error('Erro ao adicionar votante:', error);
+    }
+  };
+
+  const handleFotoChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setNovoCandidato({
+        ...novoCandidato,
+        foto: file,
+        fotoPreview: URL.createObjectURL(file)
+      });
     }
   };
 
@@ -133,30 +167,30 @@ function AdminPanel({ onLogout }) {
             <HowToVote sx={{ mr: 1 }} />
             Controle de Votação
           </Typography>
-          
+
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <Typography variant="body1" sx={{ mr: 2 }}>
-              Status: 
+              Status:
             </Typography>
-            <Chip 
-              label={votacaoAtiva ? 'Ativa' : 'Inativa'} 
-              color={votacaoAtiva ? 'success' : 'error'} 
+            <Chip
+              label={votacaoAtiva ? 'Ativa' : 'Inativa'}
+              color={votacaoAtiva ? 'success' : 'error'}
               variant="outlined"
             />
           </Box>
-          
+
           <Box sx={{ display: 'flex', gap: 2 }}>
             {!votacaoAtiva ? (
-              <Button 
-                variant="contained" 
+              <Button
+                variant="contained"
                 startIcon={<HowToVote />}
                 onClick={handleIniciarVotacao}
               >
                 Iniciar Votação
               </Button>
             ) : (
-              <Button 
-                variant="contained" 
+              <Button
+                variant="contained"
                 color="secondary"
                 onClick={handleFinalizarVotacao}
               >
@@ -164,7 +198,7 @@ function AdminPanel({ onLogout }) {
               </Button>
             )}
             {votacaoAtiva && (
-              <Button 
+              <Button
                 variant="outlined"
                 startIcon={<Login />}
                 onClick={() => navigate('/votacao')}
@@ -211,33 +245,74 @@ function AdminPanel({ onLogout }) {
             <Person sx={{ mr: 1 }} />
             Cadastrar Candidato
           </Typography>
-          
+
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
             <TextField
               fullWidth
               variant="outlined"
               size="small"
-              value={novoCandidato}
-              onChange={(e) => setNovoCandidato(e.target.value)}
+              value={novoCandidato.nome}
+              onChange={(e) => setNovoCandidato({ ...novoCandidato, nome: e.target.value })}
               placeholder="Nome do candidato"
             />
-            <Button 
-              variant="contained" 
-              startIcon={<PersonAdd />}
-              onClick={handleAddCandidato}
-            >
-              Adicionar
-            </Button>
           </Box>
-          
-          <Typography variant="subtitle1" gutterBottom>
+
+          <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+            <Button
+              variant="outlined"
+              component="label"
+              startIcon={<PhotoCamera />}
+            >
+              Adicionar Foto
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={handleFotoChange}
+              />
+            </Button>
+
+            {novoCandidato.fotoPreview && (
+              <Avatar
+                src={novoCandidato.fotoPreview}
+                sx={{ width: 56, height: 56 }}
+              />
+            )}
+          </Box>
+
+          <Button
+            variant="contained"
+            startIcon={<PersonAdd />}
+            onClick={handleAddCandidato}
+            disabled={!novoCandidato.nome}
+          >
+            Adicionar Candidato
+          </Button>
+
+          <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
             Candidatos Cadastrados ({candidatos.length})
           </Typography>
-          
+
           <Paper variant="outlined" sx={{ maxHeight: 200, overflow: 'auto' }}>
             <List dense>
               {candidatos.map(c => (
                 <ListItem key={c.id}>
+                  <ListItemAvatar>
+                    {c.fotoUrl ? (
+                      <Avatar
+                        src={c.fotoUrl}  
+                        sx={{
+                          width: 56,
+                          height: 56,
+                          objectFit: 'cover'
+                        }}
+                      />
+                    ) : (
+                      <Avatar>
+                        <Person />
+                      </Avatar>
+                    )}
+                  </ListItemAvatar>
                   <ListItemText primary={c.nome} />
                 </ListItem>
               ))}
@@ -253,7 +328,7 @@ function AdminPanel({ onLogout }) {
             <HowToReg sx={{ mr: 1 }} />
             Cadastrar Votante
           </Typography>
-          
+
           <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 2 }}>
             <TextField
               fullWidth
@@ -271,9 +346,9 @@ function AdminPanel({ onLogout }) {
               onChange={(e) => setNovoVotante({ ...novoVotante, cpf: e.target.value })}
               placeholder="CPF"
             />
-            <Button 
+            <Button
               fullWidth
-              variant="contained" 
+              variant="contained"
               startIcon={<PersonAdd />}
               onClick={handleAddVotante}
               sx={{ minWidth: '120px' }}
@@ -281,19 +356,19 @@ function AdminPanel({ onLogout }) {
               Adicionar
             </Button>
           </Box>
-          
+
           <Typography variant="subtitle1" gutterBottom>
             Votantes Cadastrados ({votantes.length})
           </Typography>
-          
+
           <Paper variant="outlined" sx={{ maxHeight: 200, overflow: 'auto' }}>
             <List dense>
               {votantes.map(v => (
                 <ListItem key={v.id}>
-                  <ListItemText 
+                  <ListItemText
                     primary={`${v.nome} - ${v.cpf}`}
-                    secondary={v.votou ? 'Já votou' : 'Não votou'} 
-                    secondaryTypographyProps={{ 
+                    secondary={v.votou ? 'Já votou' : 'Não votou'}
+                    secondaryTypographyProps={{
                       color: v.votou ? 'success.main' : 'error.main',
                       fontSize: '0.75rem'
                     }}

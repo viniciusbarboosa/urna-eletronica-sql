@@ -7,16 +7,11 @@ import {
   CssBaseline,
   TextField,
   Typography,
-  Paper,
-  Avatar,
-  FormControlLabel,
-  Checkbox,
-  Link,
-  Grid
+  Avatar
 } from '@mui/material';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import api from '../services/api';
+import logoUnibra from './imgs/logunibra.png';
 
 const defaultTheme = createTheme();
 
@@ -24,7 +19,6 @@ function Login({ setUsuario }) {
   const [login, setLogin] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -50,11 +44,19 @@ function Login({ setUsuario }) {
             alignItems: 'center',
           }}
         >
-          <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
-            <LockOutlinedIcon />
-          </Avatar>
+         
+          <Box
+            component="img"
+            src={logoUnibra}
+            alt="Logo UNIBRA"
+            sx={{ 
+              width: 120, 
+              height: 'auto',
+              mb: 3
+            }}
+          />
           <Typography component="h1" variant="h5">
-            Login
+            Login Administrativo
           </Typography>
           <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
             <TextField

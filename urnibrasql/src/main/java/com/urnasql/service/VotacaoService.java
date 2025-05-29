@@ -36,19 +36,20 @@ public class VotacaoService {
     }
 
     public void registrarVoto(Long candidatoId, String cpfVotante) {
+
         if (!votacaoAtiva) {
-            throw new RuntimeException("Votação não está ativa");
+            throw new IllegalStateException("VotaçãoEncerrada"); // Código especial
         }
 
         Votante votante = votanteRepository.findByCpf(cpfVotante)
-                .orElseThrow(() -> new RuntimeException("Votante não encontrado"));
+                .orElseThrow(() -> new IllegalArgumentException("CPF não cadastrado"));
 
         if (votante.isVotou()) {
-            throw new RuntimeException("Votante já votou");
+            throw new IllegalStateException("EleitorJaVotou");
         }
 
         Candidato candidato = candidatoRepository.findById(candidatoId)
-                .orElseThrow(() -> new RuntimeException("Candidato não encontrado"));
+                .orElseThrow(() -> new IllegalArgumentException("Candidato não encontrado"));
 
         candidato.setVotos(candidato.getVotos() + 1);
         votante.setVotou(true);

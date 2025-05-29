@@ -48,20 +48,25 @@ function VotacaoPanel() {
 
   const handleVotar = async (candidatoId) => {
     try {
-      // Remove qualquer caractere não numérico antes de validar
       const cpfNumerico = cpf.replace(/\D/g, '');
-      
+
       if (!cpfNumerico || cpfNumerico.length !== 11) {
         setMensagem('CPF inválido! Digite os 11 números');
         return;
       }
-      
+
       setLoading(true);
       await api.votar(candidatoId, cpfNumerico);
       setMensagem('Voto registrado com sucesso!');
       setVotoRegistrado(true);
     } catch (error) {
-      setMensagem(error.response?.data?.message || 'Erro ao registrar voto');
+      let mensagemErro = 'Erro ao registrar voto';
+
+      if (error.response) {
+        mensagemErro = error.response.data || mensagemErro;
+      }
+
+      setMensagem(mensagemErro);
     } finally {
       setLoading(false);
     }
@@ -78,8 +83,8 @@ function VotacaoPanel() {
           <Typography variant="body1" sx={{ mb: 3 }}>
             Seu voto foi registrado com sucesso.
           </Typography>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             startIcon={<ArrowBack />}
             onClick={() => {
               setVotoRegistrado(false);
@@ -97,10 +102,10 @@ function VotacaoPanel() {
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       {loading && <LinearProgress />}
-      
-      <Box sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
+
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
         mb: 4,
         gap: 2
       }}>
@@ -115,7 +120,7 @@ function VotacaoPanel() {
           <Typography variant="h6" component="h2" gutterBottom>
             Identificação do Eleitor
           </Typography>
-          
+
           <TextField
             fullWidth
             label="Digite seu CPF (apenas números)"
@@ -123,14 +128,14 @@ function VotacaoPanel() {
             value={cpf}
             onChange={(e) => setCpf(e.target.value)}
             placeholder="Digite os 11 números do CPF"
-            inputProps={{ 
+            inputProps={{
               maxLength: 11,
               inputMode: 'numeric',
               pattern: '[0-9]*'
             }}
             sx={{ mb: 2 }}
           />
-          
+
           {mensagem && (
             <Alert severity={mensagem.includes('sucesso') ? 'success' : 'error'} sx={{ mb: 2 }}>
               {mensagem}
@@ -139,7 +144,7 @@ function VotacaoPanel() {
         </CardContent>
       </Card>
 
-      <Typography variant="h5" component="h2" gutterBottom sx={{ 
+      <Typography variant="h5" component="h2" gutterBottom sx={{
         fontWeight: 'bold',
         display: 'flex',
         alignItems: 'center',
@@ -161,9 +166,9 @@ function VotacaoPanel() {
       <Grid container spacing={3}>
         {candidatos.map(candidato => (
           <Grid item xs={12} sm={6} md={4} key={candidato.id}>
-            <Card 
+            <Card
               elevation={3}
-              sx={{ 
+              sx={{
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
@@ -177,21 +182,41 @@ function VotacaoPanel() {
               onClick={() => handleVotar(candidato.id)}
             >
               <CardContent sx={{ flexGrow: 1, textAlign: 'center' }}>
-                <Avatar sx={{ 
-                  width: 80, 
-                  height: 80, 
-                  margin: '0 auto 16px',
-                  bgcolor: 'primary.main',
-                  fontSize: '2rem'
-                }}>
-                  {candidato.nome.charAt(0)}
-                </Avatar>
-                
+                {candidato.fotoUrl ? (
+                  <Box
+                    component="img"
+                    src={candidato.fotoUrl}
+                    alt={candidato.nome}
+                    sx={{
+                      width: 120,
+                      height: 120,
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      margin: '0 auto 16px',
+                      border: '3px solid #1976d2'
+                    }}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = '';
+                    }}
+                  />
+                ) : (
+                  <Avatar sx={{
+                    width: 80,
+                    height: 80,
+                    margin: '0 auto 16px',
+                    bgcolor: 'primary.main',
+                    fontSize: '2rem'
+                  }}>
+                    {candidato.nome.charAt(0)}
+                  </Avatar>
+                )}
+
                 <Typography variant="h6" component="h3" gutterBottom>
                   {candidato.nome}
                 </Typography>
-                
-                <Chip 
+
+                <Chip
                   icon={<HowToVote fontSize="small" />}
                   label="Votar neste candidato"
                   color="primary"

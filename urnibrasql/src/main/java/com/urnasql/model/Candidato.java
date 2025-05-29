@@ -14,4 +14,7 @@ public class Candidato {
     private String nome;
 
     private int votos = 0;
+
+    @Column(length = 2048)
+    private String fotoUrl;
 }
